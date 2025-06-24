@@ -1,39 +1,57 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Video Upload Website</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       margin: 40px;
     }
-
-    h1 {
+    h1, h2 {
       color: #333;
     }
-
     #uploadForm {
       margin-top: 20px;
+      margin-bottom: 30px;
     }
-
     input[type="file"] {
       margin-bottom: 10px;
     }
-
     #message {
       margin-top: 15px;
       font-weight: bold;
+      color: green;
     }
-
-    video {
-      width: 320px;
-      margin: 10px 0;
+    #message.error {
+      color: red;
+    }
+    .folder {
+      cursor: pointer;
+      user-select: none;
+      font-weight: bold;
+      margin: 10px 0 5px;
+    }
+    .folder::before {
+      content: "▶"; /* triangle arrow */
+      display: inline-block;
+      margin-right: 6px;
+      transition: transform 0.2s;
+    }
+    .folder.open::before {
+      transform: rotate(90deg);
+    }
+    .videos {
+      margin-left: 20px;
+      display: none;
+    }
+    .videos.open {
       display: block;
     }
-
-    .category {
-      margin-bottom: 30px;
+    video {
+      width: 320px;
+      margin: 10px 10px 10px 0;
+      display: inline-block;
     }
   </style>
 </head>
@@ -41,32 +59,34 @@
   <h1>Upload a Video</h1>
 
   <form id="uploadForm">
-    <label>Category:
-      <select id="category" name="category" required>
-        <option value="funny">Funny</option>
-        <option value="education">Education</option>
-        <option value="gaming">Gaming</option>
-      </select>
-    </label><br><br>
-
+    <label for="category">Category:</label>
+    <select id="category" name="category" required>
+      <option value="funny">Funny</option>
+      <option value="education">Education</option>
+      <option value="gaming">Gaming</option>
+    </select>
+    <br /><br />
     <input type="file" id="videoInput" name="video" accept="video/*" required />
     <button type="submit">Upload</button>
   </form>
 
   <p id="message"></p>
 
-  <hr>
+  <hr />
 
   <h2>All Uploaded Videos</h2>
   <div id="videoGallery"></div>
 
   <script>
-    // Upload form handling
     document.getElementById('uploadForm').addEventListener('submit', async (e) => {
       e.preventDefault();
 
       const form = e.target;
       const formData = new FormData(form);
+
+      const messageEl = document.getElementById('message');
+      messageEl.textContent = '';
+      messageEl.classList.remove('error');
 
       try {
         const res = await fetch('/upload', {
@@ -75,48 +95,74 @@
         });
 
         const text = await res.text();
-        document.getElementById('message').textContent = text;
-
-        // Clear the form
-        form.reset();
-
-        // Refresh video gallery
-        loadVideos();
-
+        if (res.ok) {
+          messageEl.textContent = text;
+          form.reset();
+          loadVideos();
+        } else {
+          messageEl.textContent = `Error: ${text}`;
+          messageEl.classList.add('error');
+        }
       } catch (error) {
-        document.getElementById('message').textContent = 'Upload failed!';
+        messageEl.textContent = 'Upload failed due to network error!';
+        messageEl.classList.add('error');
         console.error('Upload error:', error);
       }
     });
 
-    // Fetch and display videos
     async function loadVideos() {
-      const res = await fetch('/videos-list');
-      const data = await res.json();
+      try {
+        const res = await fetch('/videos-list');
+        if (!res.ok) throw new Error('Failed to fetch videos list');
+        const data = await res.json();
 
-      const container = document.getElementById('videoGallery');
-      container.innerHTML = '';
+        const container = document.getElementById('videoGallery');
+        container.innerHTML = '';
 
-      data.forEach(group => {
-        const section = document.createElement('div');
-        section.className = 'category';
+        if (data.length === 0) {
+          container.textContent = 'No videos uploaded yet.';
+          return;
+        }
 
-        const title = document.createElement('h3');
-        title.textContent = `Category: ${group.category}`;
-        section.appendChild(title);
+        data.forEach(group => {
+          // Create folder div (category)
+          const folder = document.createElement('div');
+          folder.className = 'folder';
+          folder.textContent = group.category;
 
-        group.videos.forEach(video => {
-          const videoEl = document.createElement('video');
-          videoEl.src = video.url;
-          videoEl.controls = true;
-          section.appendChild(videoEl);
+          // Create container for videos inside folder
+          const videosDiv = document.createElement('div');
+          videosDiv.className = 'videos';
+
+          if (group.videos.length === 0) {
+            const noVideos = document.createElement('p');
+            noVideos.textContent = 'No videos in this category yet.';
+            videosDiv.appendChild(noVideos);
+          } else {
+            group.videos.forEach(video => {
+              const videoEl = document.createElement('video');
+              videoEl.src = video.url;
+              videoEl.controls = true;
+              videoEl.title = video.filename;
+              videosDiv.appendChild(videoEl);
+            });
+          }
+
+          // Toggle open/close on folder click
+          folder.addEventListener('click', () => {
+            const isOpen = videosDiv.classList.toggle('open');
+            folder.classList.toggle('open', isOpen);
+          });
+
+          container.appendChild(folder);
+          container.appendChild(videosDiv);
         });
-
-        container.appendChild(section);
-      });
+      } catch (error) {
+        console.error('Error loading videos:', error);
+        document.getElementById('videoGallery').textContent = 'Error loading videos.';
+      }
     }
 
-    // Initial load
     loadVideos();
   </script>
 </body>

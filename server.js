@@ -6,16 +6,13 @@ const fs = require('fs');
 const app = express();
 const PORT = 3000;
 
-// Middleware to parse form data
+// Middleware to parse form data for multer
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static('public'));
 
-// ✅ Serve uploaded videos publicly
-app.use('/videos', express.static(path.join(__dirname, 'uploads')));
-
-// ✅ Multer storage config with dynamic category folder creation
+// Multer storage config to save files by category folder
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
+    // Category sent in form-data
     const category = req.body.category || 'uncategorized';
     const uploadPath = path.join(__dirname, 'uploads', category);
 
@@ -23,56 +20,59 @@ const storage = multer.diskStorage({
       fs.mkdirSync(uploadPath, { recursive: true });
       console.log(`Created upload folder: ${uploadPath}`);
     }
-
     cb(null, uploadPath);
   },
   filename: (req, file, cb) => {
     const uniqueName = Date.now() + path.extname(file.originalname);
     cb(null, uniqueName);
-  }
+  },
 });
 
 const upload = multer({ storage });
 
-// ✅ Upload endpoint
-app.post('/upload', upload.single('video'), (req, res) => {
-  if (!req.file) {
-    return res.status(400).send('No video uploaded.');
-  }
+// Serve frontend static files
+app.use(express.static('public'));
 
+// Serve uploaded videos statically
+app.use('/videos', express.static(path.join(__dirname, 'uploads')));
+
+// Upload page (optional, since static serves index.html)
+// app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+
+// Handle video upload with category
+app.post('/upload', upload.single('video'), (req, res) => {
+  if (!req.file) return res.status(400).send('No file uploaded.');
   res.send('Video uploaded successfully!');
 });
 
-// ✅ List videos grouped by category
+// List all uploaded videos by category
 app.get('/videos-list', (req, res) => {
-  const uploadsPath = path.join(__dirname, 'uploads');
+  const uploadsDir = path.join(__dirname, 'uploads');
+  if (!fs.existsSync(uploadsDir)) return res.json([]);
 
-  if (!fs.existsSync(uploadsPath)) return res.json([]);
-
-  const categories = fs.readdirSync(uploadsPath, { withFileTypes: true })
+  const categories = fs.readdirSync(uploadsDir, { withFileTypes: true })
     .filter(dirent => dirent.isDirectory())
     .map(dirent => dirent.name);
 
   const result = categories.map(category => {
-    const categoryPath = path.join(uploadsPath, category);
-
-    const files = fs.readdirSync(categoryPath).filter(file =>
-      ['.mp4', '.webm', '.mov', '.avi'].includes(path.extname(file).toLowerCase())
-    );
-
+    const categoryPath = path.join(uploadsDir, category);
+    const files = fs.readdirSync(categoryPath).filter(f => {
+      // Optional: filter video files by extension
+      const ext = path.extname(f).toLowerCase();
+      return ['.mp4', '.mov', '.avi', '.mkv', '.webm'].includes(ext);
+    });
     return {
       category,
-      videos: files.map(filename => ({
-        filename,
-        url: `/videos/${category}/${filename}`
-      }))
+      videos: files.map(file => ({
+        filename: file,
+        url: `/videos/${category}/${file}`,
+      })),
     };
   });
 
   res.json(result);
 });
 
-// ✅ Start server
 app.listen(PORT, () => {
-  console.log(`🚀 Server running at http://localhost:${PORT}`);
+  console.log(`Server running on http://localhost:${PORT}`);
 });
