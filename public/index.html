@@ -2,80 +2,128 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Video Upload Website</title>
+  <title>MyFlix Uploads</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
   <style>
     body {
-      font-family: Arial, sans-serif;
-      margin: 40px;
+      font-family: 'Arial', sans-serif;
+      margin: 0;
+      background-color: #141414;
+      color: #fff;
     }
-    h1, h2 {
-      color: #333;
+
+    header {
+      background-color: #111;
+      padding: 20px;
+      text-align: center;
+      font-family: 'Bebas Neue', cursive;
+      font-size: 2.5rem;
+      color: #e50914;
     }
-    #uploadForm {
-      margin-top: 20px;
+
+    main {
+      padding: 20px;
+    }
+
+    form {
+      background: #222;
+      padding: 20px;
+      border-radius: 10px;
       margin-bottom: 30px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.6);
     }
-    input[type="file"] {
-      margin-bottom: 10px;
+
+    label, select, input, button {
+      font-size: 1rem;
     }
+
+    select, input[type="file"] {
+      background: #333;
+      color: #fff;
+      border: none;
+      padding: 8px;
+      border-radius: 5px;
+      margin-top: 5px;
+    }
+
+    button {
+      background-color: #e50914;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background-color: #f40612;
+    }
+
     #message {
       margin-top: 15px;
       font-weight: bold;
-      color: green;
+      color: #46d369;
     }
+
     #message.error {
       color: red;
     }
+
     .folder {
-      cursor: pointer;
-      user-select: none;
+      font-size: 1.3rem;
+      margin: 30px 0 10px;
       font-weight: bold;
-      margin: 10px 0 5px;
+      cursor: pointer;
+      color: #e5e5e5;
     }
-    .folder::before {
-      content: "▶"; /* triangle arrow */
-      display: inline-block;
-      margin-right: 6px;
-      transition: transform 0.2s;
-    }
-    .folder.open::before {
-      transform: rotate(90deg);
-    }
+
     .videos {
-      margin-left: 20px;
-      display: none;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 15px;
     }
-    .videos.open {
-      display: block;
-    }
+
     video {
-      width: 320px;
-      margin: 10px 10px 10px 0;
-      display: inline-block;
+      width: 100%;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+      transition: transform 0.3s ease;
+    }
+
+    video:hover {
+      transform: scale(1.05);
+    }
+
+    .section-title {
+      font-size: 1.5rem;
+      margin-top: 40px;
+      margin-bottom: 20px;
+      border-left: 4px solid #e50914;
+      padding-left: 10px;
     }
   </style>
 </head>
 <body>
-  <h1>Upload a Video</h1>
+  <header>MYFLIX</header>
+  <main>
+    <form id="uploadForm">
+      <label for="category">Choose Category:</label><br />
+      <select id="category" name="category" required>
+        <option value="funny">Funny</option>
+        <option value="education">Education</option>
+        <option value="gaming">Gaming</option>
+      </select>
+      <br /><br />
+      <input type="file" id="videoInput" name="video" accept="video/*" required />
+      <button type="submit">Upload</button>
+    </form>
 
-  <form id="uploadForm">
-    <label for="category">Category:</label>
-    <select id="category" name="category" required>
-      <option value="funny">Funny</option>
-      <option value="education">Education</option>
-      <option value="gaming">Gaming</option>
-    </select>
-    <br /><br />
-    <input type="file" id="videoInput" name="video" accept="video/*" required />
-    <button type="submit">Upload</button>
-  </form>
+    <p id="message"></p>
 
-  <p id="message"></p>
-
-  <hr />
-
-  <h2>All Uploaded Videos</h2>
-  <div id="videoGallery"></div>
+    <div class="section-title">All Uploaded Videos</div>
+    <div id="videoGallery"></div>
+  </main>
 
   <script>
     document.getElementById('uploadForm').addEventListener('submit', async (e) => {
@@ -125,33 +173,19 @@
         }
 
         data.forEach(group => {
-          // Create folder div (category)
           const folder = document.createElement('div');
           folder.className = 'folder';
           folder.textContent = group.category;
 
-          // Create container for videos inside folder
           const videosDiv = document.createElement('div');
           videosDiv.className = 'videos';
 
-          if (group.videos.length === 0) {
-            const noVideos = document.createElement('p');
-            noVideos.textContent = 'No videos in this category yet.';
-            videosDiv.appendChild(noVideos);
-          } else {
-            group.videos.forEach(video => {
-              const videoEl = document.createElement('video');
-              videoEl.src = video.url;
-              videoEl.controls = true;
-              videoEl.title = video.filename;
-              videosDiv.appendChild(videoEl);
-            });
-          }
-
-          // Toggle open/close on folder click
-          folder.addEventListener('click', () => {
-            const isOpen = videosDiv.classList.toggle('open');
-            folder.classList.toggle('open', isOpen);
+          group.videos.forEach(video => {
+            const videoEl = document.createElement('video');
+            videoEl.src = video.url;
+            videoEl.controls = true;
+            videoEl.title = video.filename;
+            videosDiv.appendChild(videoEl);
           });
 
           container.appendChild(folder);
