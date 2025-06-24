@@ -12,6 +12,42 @@
       color: #fff;
     }
 
+    /* Netflix-style navigation bar */
+    .navbar {
+      background-color: #111;
+      color: white;
+      display: flex;
+      align-items: center;
+      padding: 10px 40px;
+      font-family: 'Arial', sans-serif;
+    }
+
+    .navbar .logo {
+      color: #e50914;
+      font-weight: bold;
+      font-size: 24px;
+      margin-right: 40px;
+    }
+
+    .navbar .nav-links {
+      list-style: none;
+      display: flex;
+      gap: 25px;
+      padding: 0;
+      margin: 0;
+    }
+
+    .navbar .nav-links li a {
+      text-decoration: none;
+      color: white;
+      font-size: 14px;
+      transition: color 0.3s;
+    }
+
+    .navbar .nav-links li a:hover {
+      color: #e50914;
+    }
+
     header {
       background-color: #111;
       padding: 20px;
@@ -105,14 +141,30 @@
   </style>
 </head>
 <body>
-  <header>MYFLIX</header>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <div class="logo">MYFLIX</div>
+    <ul class="nav-links">
+      <li><a href="#">Home</a></li>
+      <li><a href="#">TV Shows</a></li>
+      <li><a href="#">Movies</a></li>
+      <li><a href="#">Games</a></li>
+      <li><a href="#">New & Popular</a></li>
+      <li><a href="#">My List</a></li>
+      <li><a href="#">Browse by Languages</a></li>
+    </ul>
+  </nav>
+
+  <header>MYFLIX Upload Center</header>
+
   <main>
     <form id="uploadForm">
       <label for="category">Choose Category:</label><br />
       <select id="category" name="category" required>
         <option value="funny">Funny</option>
         <option value="education">Education</option>
-        <option value="gaming">Gaming</option>
+        <option value="gaming">Games</option>
       </select>
       <br /><br />
       <input type="file" id="videoInput" name="video" accept="video/*" required />
@@ -131,7 +183,6 @@
 
       const form = e.target;
       const formData = new FormData(form);
-
       const messageEl = document.getElementById('message');
       messageEl.textContent = '';
       messageEl.classList.remove('error');
@@ -173,9 +224,11 @@
         }
 
         data.forEach(group => {
+          let displayName = group.category.toLowerCase() === 'gaming' ? 'Games' : group.category;
+
           const folder = document.createElement('div');
           folder.className = 'folder';
-          folder.textContent = group.category;
+          folder.textContent = displayName;
 
           const videosDiv = document.createElement('div');
           videosDiv.className = 'videos';
