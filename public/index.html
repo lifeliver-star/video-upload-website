@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Video Upload</title>
+  <title>Video Upload Website</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -25,38 +25,99 @@
       margin-top: 15px;
       font-weight: bold;
     }
+
+    video {
+      width: 320px;
+      margin: 10px 0;
+      display: block;
+    }
+
+    .category {
+      margin-bottom: 30px;
+    }
   </style>
 </head>
 <body>
   <h1>Upload a Video</h1>
 
-<form id="uploadForm">
-  <select id="category" name="category" required>
-    <option value="funny">Funny</option>
-    <option value="education">Education</option>
-    <option value="gaming">Gaming</option>
-  </select>
-  <input type="file" id="videoInput" name="video" accept="video/*" required />
-  <button type="submit">Upload</button>
-</form>
-<script>
-document.getElementById('uploadForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const form = e.target;
-  const formData = new FormData(form);
+  <form id="uploadForm">
+    <label>Category:
+      <select id="category" name="category" required>
+        <option value="funny">Funny</option>
+        <option value="education">Education</option>
+        <option value="gaming">Gaming</option>
+      </select>
+    </label><br><br>
 
-  const res = await fetch('/upload', {
-    method: 'POST',
-    body: formData
-  });
+    <input type="file" id="videoInput" name="video" accept="video/*" required />
+    <button type="submit">Upload</button>
+  </form>
 
-  const text = await res.text();
-  alert(text);
-});
-</script>
   <p id="message"></p>
 
-  <script src="upload.js"></script>
+  <hr>
+
+  <h2>All Uploaded Videos</h2>
+  <div id="videoGallery"></div>
+
+  <script>
+    // Upload form handling
+    document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const form = e.target;
+      const formData = new FormData(form);
+
+      try {
+        const res = await fetch('/upload', {
+          method: 'POST',
+          body: formData
+        });
+
+        const text = await res.text();
+        document.getElementById('message').textContent = text;
+
+        // Clear the form
+        form.reset();
+
+        // Refresh video gallery
+        loadVideos();
+
+      } catch (error) {
+        document.getElementById('message').textContent = 'Upload failed!';
+        console.error('Upload error:', error);
+      }
+    });
+
+    // Fetch and display videos
+    async function loadVideos() {
+      const res = await fetch('/videos-list');
+      const data = await res.json();
+
+      const container = document.getElementById('videoGallery');
+      container.innerHTML = '';
+
+      data.forEach(group => {
+        const section = document.createElement('div');
+        section.className = 'category';
+
+        const title = document.createElement('h3');
+        title.textContent = `Category: ${group.category}`;
+        section.appendChild(title);
+
+        group.videos.forEach(video => {
+          const videoEl = document.createElement('video');
+          videoEl.src = video.url;
+          videoEl.controls = true;
+          section.appendChild(videoEl);
+        });
+
+        container.appendChild(section);
+      });
+    }
+
+    // Initial load
+    loadVideos();
+  </script>
 </body>
 </html>
-

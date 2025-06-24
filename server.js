@@ -10,19 +10,18 @@ const PORT = 3000;
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
-// ✅ Serve uploaded files
+// ✅ Serve uploaded videos publicly
 app.use('/videos', express.static(path.join(__dirname, 'uploads')));
 
-// ✅ Multer storage config with dynamic folder creation
+// ✅ Multer storage config with dynamic category folder creation
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const category = req.body.category || 'uncategorized';
     const uploadPath = path.join(__dirname, 'uploads', category);
 
-    // ✅ Create the folder if it doesn't exist
     if (!fs.existsSync(uploadPath)) {
       fs.mkdirSync(uploadPath, { recursive: true });
-      console.log(`Created folder: ${uploadPath}`);
+      console.log(`Created upload folder: ${uploadPath}`);
     }
 
     cb(null, uploadPath);
@@ -35,16 +34,19 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-
-// Handle video upload with category
+// ✅ Upload endpoint
 app.post('/upload', upload.single('video'), (req, res) => {
-  if (!req.file) return res.status(400).send('No file uploaded.');
+  if (!req.file) {
+    return res.status(400).send('No video uploaded.');
+  }
+
   res.send('Video uploaded successfully!');
 });
 
-// ✅ Route to list all uploaded videos (grouped by category)
+// ✅ List videos grouped by category
 app.get('/videos-list', (req, res) => {
   const uploadsPath = path.join(__dirname, 'uploads');
+
   if (!fs.existsSync(uploadsPath)) return res.json([]);
 
   const categories = fs.readdirSync(uploadsPath, { withFileTypes: true })
@@ -53,9 +55,10 @@ app.get('/videos-list', (req, res) => {
 
   const result = categories.map(category => {
     const categoryPath = path.join(uploadsPath, category);
-    const files = fs.readdirSync(categoryPath).filter(f => {
-      return ['.mp4', '.webm', '.avi', '.mov'].includes(path.extname(f).toLowerCase());
-    });
+
+    const files = fs.readdirSync(categoryPath).filter(file =>
+      ['.mp4', '.webm', '.mov', '.avi'].includes(path.extname(file).toLowerCase())
+    );
 
     return {
       category,
@@ -71,5 +74,5 @@ app.get('/videos-list', (req, res) => {
 
 // ✅ Start server
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`🚀 Server running at http://localhost:${PORT}`);
 });
