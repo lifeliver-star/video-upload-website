@@ -102,3 +102,34 @@ app.get('/analytics/top-categories', (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server running at http://localhost:${PORT}`);
 });
+
+const stripe = require('stripe')('sk_test_51RdwQ75UOZLKcfgOkVICwFZDjt3qvQ1fSVSTEDedN8t16Gsjd6sKY10UTUxxOLHdJ5Qgebc70kjmMxIOsa21zvA400aBUm2bHt'); // Use env var in production
+
+app.post('/create-checkout-session', async (req, res) => {
+  try {
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      mode: 'payment', // or 'subscription'
+      line_items: [
+        {
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: 'Premium Video Access',
+            },
+            unit_amount: 199, // $1.99
+          },
+          quantity: 1,
+        },
+      ],
+      success_url: 'http://localhost:3000/success.html',
+      cancel_url: 'http://localhost:3000/cancel.html',
+    });
+
+    res.json({ id: session.id });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Something went wrong' });
+  }
+});
+

@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <title>MyFlix Uploads</title>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+  <script src="https://js.stripe.com/v3/"></script>
   <style>
     body {
       font-family: 'Arial', sans-serif;
@@ -138,6 +139,10 @@
       border-left: 4px solid #e50914;
       padding-left: 10px;
     }
+
+    .premium-btn {
+      margin-top: 20px;
+    }
   </style>
 </head>
 <body>
@@ -172,6 +177,11 @@
     </form>
 
     <p id="message"></p>
+
+    <!-- 🔔 Stripe Premium Button -->
+    <div class="premium-btn">
+      <button id="checkout-button">Buy Premium Access</button>
+    </div>
 
     <div class="section-title">All Uploaded Videos</div>
     <div id="videoGallery"></div>
@@ -251,6 +261,22 @@
     }
 
     loadVideos();
+
+    // Stripe Payment Handling
+    const stripe = Stripe('pk_test_51RdwQ75UOZLKcfgOrZWsVSSv3XVlYojwY404SrnzTk22wumTZPmflJWDXm5KK9KJDUgL6JliXMC9FivVvBt7GfYd004XuSu8Zc'); // Replace with your actual Stripe Public Key
+
+    document.getElementById('checkout-button').addEventListener('click', async () => {
+      const res = await fetch('/create-checkout-session', {
+        method: 'POST',
+      });
+      const data = await res.json();
+      const result = await stripe.redirectToCheckout({
+        sessionId: data.id,
+      });
+      if (result.error) {
+        alert(result.error.message);
+      }
+    });
   </script>
 </body>
 </html>
