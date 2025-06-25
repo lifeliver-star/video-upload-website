@@ -100,7 +100,7 @@ app.get('/analytics/top-categories', (req, res) => {
 });
 
 // ✅ Stripe payment
-const stripe = require('stripe')(process.env.STRIPE_KEY); // Use .env file to store key
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY); // Use .env file to store key
 
 app.post('/create-checkout-session', async (req, res) => {
   try {
