@@ -3,6 +3,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const cors = require('cors');
+require('dotenv').config();
 
 const app = express();
 const PORT = 3000;
@@ -98,18 +99,14 @@ app.get('/analytics/top-categories', (req, res) => {
   res.json(result.slice(0, 5)); // return top 5
 });
 
-// ✅ Start the server
-app.listen(PORT, () => {
-  console.log(`🚀 Server running at http://localhost:${PORT}`);
-});
-
-const stripe = require('stripe')('sk_test_xxx'); // Use env var in production
+// ✅ Stripe payment
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY); // Use .env file to store key
 
 app.post('/create-checkout-session', async (req, res) => {
   try {
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
-      mode: 'payment', // or 'subscription'
+      mode: 'payment',
       line_items: [
         {
           price_data: {
@@ -117,7 +114,7 @@ app.post('/create-checkout-session', async (req, res) => {
             product_data: {
               name: 'Premium Video Access',
             },
-            unit_amount: 199, // $1.99
+            unit_amount: 199,
           },
           quantity: 1,
         },
@@ -133,3 +130,16 @@ app.post('/create-checkout-session', async (req, res) => {
   }
 });
 
+// ✅ Success and Cancel routes
+app.get('/success.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'success.html'));
+});
+
+app.get('/cancel.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'cancel.html'));
+});
+
+// ✅ Start the server
+app.listen(PORT, () => {
+  console.log(`🚀 Server running at http://localhost:${PORT}`);
+});
