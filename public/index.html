@@ -263,7 +263,7 @@
     loadVideos();
 
     // Stripe Payment Handling
-    const stripe = Stripe('pk_test_xxxxxxx'); // Replace with your actual Stripe Public Key
+    const stripe = Stripe('pk_test_51RdwQ75UOZLKcfgOrZWsVSSv3XVlYojwY404SrnzTk22wumTZPmflJWDXm5KK9KJDUgL6JliXMC9FivVvBt7GfYd004XuSu8Zc'); // Replace with your actual Stripe Public Key
 
     document.getElementById('checkout-button').addEventListener('click', async () => {
       const res = await fetch('/create-checkout-session', {
